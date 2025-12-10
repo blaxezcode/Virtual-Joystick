@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Joystec | Interactive Demo</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@600;700;800&family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body style="overflow: hidden">
+    <!-- Prevent body scroll on demo page -->
+
+    <header>
+      <div class="container">
+        <div class="logo">
+          <a
+            href="index.html"
+            style="display: flex; align-items: center; gap: 0.5rem"
+          >
+            <i class="fas fa-arrow-left" style="font-size: 1rem"></i> Joystec
+            Demo
+          </a>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 1rem">
+          <div style="font-family: monospace; font-size: 0.9rem">
+            <span id="positionX">0.00</span>, <span id="positionY">0.00</span>
+          </div>
+          <button
+            id="sidebar-toggle"
+            class="sidebar-toggle-btn"
+            style="
+              position: static;
+              box-shadow: none;
+              border: none;
+              width: auto;
+              height: auto;
+            "
+          >
+            <i class="fas fa-sliders-h"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="embedded-viewport" style="height: calc(100vh - 80px)">
+      <div id="ui-layer">
+        <div id="score-display" class="hud-text">00</div>
+      </div>
+
+      <div id="game-over-screen">
+        <h1>Signal Lost</h1>
+        <div
+          class="hud-text"
+          id="final-score"
+          style="margin-bottom: 20px; font-size: 20px"
+        >
+          SCORE: 0
+        </div>
+        <button id="restart-btn">Re-Initialize</button>
+      </div>
+
+      <canvas id="game-canvas"></canvas>
+      <div id="joystick-container" class="joystick-overlay"></div>
+    </div>
+
+    <aside class="floating-sidebar">
+      <div class="sidebar-title">
+        <i class="fas fa-sliders-h"></i> Customization
+      </div>
+      <div class="control-section">
+        <h3>Behavior</h3>
+        <div class="control-group">
+          <label>Sensitivity <span class="val-display"></span></label>
+          <input
+            type="range"
+            id="sensitivity-slider"
+            min="0.1"
+            max="3"
+            step="0.1"
+            value="1"
+          />
+          <input
+            type="number"
+            id="sensitivity"
+            value="1"
+            step="0.1"
+            style="display: none"
+          />
+        </div>
+        <div class="control-group">
+          <label>Deadzone</label>
+          <input
+            type="range"
+            id="deadzone-slider"
+            min="0"
+            max="0.5"
+            step="0.05"
+            value="0.1"
+          />
+          <input
+            type="number"
+            id="deadzone"
+            value="0.1"
+            step="0.05"
+            style="display: none"
+          />
+        </div>
+        <div class="checkbox-row">
+          <label style="font-weight: 400"
+            ><input type="checkbox" id="boundaries" checked /> Boundaries</label
+          >
+          <label style="font-weight: 400"
+            ><input type="checkbox" id="autoCenter" checked />
+            Auto-Center</label
+          >
+        </div>
+        <div class="checkbox-row">
+          <label style="font-weight: 400"
+            ><input type="checkbox" id="vibration" checked /> Haptics</label
+          >
+        </div>
+      </div>
+
+      <div class="control-section">
+        <h3>Appearance</h3>
+        <div class="control-group">
+          <label>Size</label>
+          <input
+            type="range"
+            id="width-slider"
+            min="100"
+            max="300"
+            value="150"
+          />
+          <input type="number" id="width" value="150" style="display: none" />
+          <input type="number" id="height" value="150" style="display: none" />
+        </div>
+        <div class="control-group">
+          <label>Handle Radius</label>
+          <input
+            type="range"
+            id="handleRadius-slider"
+            min="20"
+            max="80"
+            value="35"
+          />
+          <input
+            type="number"
+            id="handleRadius"
+            value="35"
+            style="display: none"
+          />
+        </div>
+        <div class="control-group">
+          <label>Movement Range</label>
+          <input
+            type="range"
+            id="maxMoveRadius-slider"
+            min="20"
+            max="150"
+            value="75"
+          />
+          <input
+            type="number"
+            id="maxMoveRadius"
+            value="75"
+            style="display: none"
+          />
+        </div>
+        <div class="control-group">
+          <div
+            style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem"
+          >
+            <div>
+              <label style="margin-bottom: 0.2rem">Base</label>
+              <div class="color-input-wrapper">
+                <input type="color" id="color" value="#f0f0f0" />
+              </div>
+              <input
+                type="text"
+                id="color-text"
+                value="#f0f0f0"
+                style="display: none"
+              />
+            </div>
+            <div>
+              <label style="margin-bottom: 0.2rem">Handle</label>
+              <div class="color-input-wrapper">
+                <input type="color" id="handleColor" value="#000000" />
+              </div>
+              <input
+                type="text"
+                id="handleColor-text"
+                value="#000000"
+                style="display: none"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="control-group">
+          <label>Shape & Mode</label>
+          <div style="display: flex; gap: 0.5rem">
+            <select id="shape">
+              <option value="circle">Circle</option>
+              <option value="square">Square</option>
+            </select>
+            <select id="mode">
+              <option value="dynamic">Dynamic</option>
+              <option value="static">Static</option>
+            </select>
+          </div>
+          <select id="lockAxis" style="display: none">
+            <option value="">None</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="control-section">
+        <h3>
+          Zones
+          <button
+            id="addZone"
+            class="btn-outline"
+            style="float: right; padding: 0.1rem 0.5rem; font-size: 0.7rem"
+          >
+            + Add
+          </button>
+        </h3>
+        <div id="zone-settings"></div>
+      </div>
+
+      <div style="margin-top: 2rem">
+        <button id="reset-config" class="btn-outline" style="width: 100%">
+          Reset Default
+        </button>
+      </div>
+    </aside>
+
+    <div
+      id="toast-container"
+      style="position: fixed; bottom: 2rem; right: 2rem"
+    ></div>
+    <script type="module" src="script.js"></script>
+  </body>
+</html>

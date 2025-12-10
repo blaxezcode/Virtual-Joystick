@@ -1,0 +1,20 @@
+{
+  "name": "virtual-joystick-lib",
+  "version": "1.0.0",
+  "description": "A full-featured, customizable virtual joystick library for web applications.",
+  "main": "src/virtual-joystick.js",
+  "module": "src/virtual-joystick.js",
+  "types": "src/virtual-joystick.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "joystick",
+    "virtual-joystick",
+    "touch-controls",
+    "game-controls",
+    "nipplejs-alternative"
+  ],
+  "author": "blaxezcode",
+  "license": "MIT"
+}

@@ -1,374 +1,435 @@
 /*
-SCRIPT FOR THE VIRTUAL JOYSTICK THIS IS A USAGE EXAMPLE CODE FOR USAGE OF THE VIRTUAL JOYSTICK LIBRARY 
-AUTHOR: joker-pyc
-version: 2.0.0
+SCRIPT FOR THE VIRTUAL JOYSTICK DEMO
+AUTHOR: blaxezcode
+version: 4.0.0
 */
 
-import VirtualJoystick from './src/virtual-joystick.js';
+import VirtualJoystick from "./src/virtual-joystick.js";
+import { Game } from "./src/game.js";
 
-console.log("script Initialized");
+console.log("Joystec Script Initialized");
 
 let joystick;
+let game;
 let zoneCount = 0;
-let currentTheme = localStorage.getItem('theme') || 'light';
 
-function initializeJoystick(options) {
-    const container = document.getElementById('joystick-container');
-    if (!container) return;
-
-    // Clear the container first
-    container.innerHTML = '';
-    
-    if (joystick) joystick.destroy();
-
-    // Create the joystick with the container element
-    joystick = new VirtualJoystick(container, {
-        ...options,
-        onChange: updateJoystickValues
-    });
-
-    // Ensure the container is visible
-    container.style.display = 'block';
-    container.style.position = 'relative';
-    container.style.width = `${options.width}px`;
-    container.style.height = `${options.height}px`;
+function isDemoPage() {
+  return window.location.pathname.endsWith("demo.html");
 }
 
-function updateJoystickValues(data) {
-    document.getElementById('positionX').textContent = data.position.x.toFixed(2);
-    document.getElementById('positionY').textContent = data.position.y.toFixed(2);
-    document.getElementById('deltaX').textContent = data.delta.x.toFixed(2);
-    document.getElementById('deltaY').textContent = data.delta.y.toFixed(2);
-    document.getElementById('angle').textContent = (data.angle * (180 / Math.PI)).toFixed(2);
-    document.getElementById('distance').textContent = data.distance.toFixed(2);
-    document.getElementById('currentZone').textContent = data.zone || 'None';
+function initializeGame() {
+  const canvas = document.getElementById("game-canvas");
+  if (canvas) {
+    game = new Game("game-canvas");
+    game.start();
+    console.log("Game started");
+  }
+}
+
+function initializeJoystick(options) {
+  const container = document.getElementById("joystick-container");
+  if (!container) return;
+
+  console.log("Initializing Joystick with options:", options);
+
+  // Clear the container first
+  container.innerHTML = "";
+
+  if (joystick) joystick.destroy();
+
+  // FORCE STATIC MODE for Landing Page visibility if not explicitly set
+  // This ensures the user sees something immediately.
+  // We check if we are on demo page or not.
+  if (!isDemoPage() && !options.mode) {
+    options.mode = "static";
+    console.log("Forcing 'static' mode for non-demo page.");
+  }
+
+  // Create the joystick with the container element
+  joystick = new VirtualJoystick(container, {
+    ...options,
+    onChange: (data) => {
+      updateJoystickValues(data);
+      if (game) {
+        // Pass normalized delta to game
+        game.updateinput(data.delta);
+      }
+    },
+  });
+
+  // Ensure the container is visible and sized
+  container.style.display = "block";
+  container.style.position = "absolute"; // FIX: Must be absolute to overlay the canvas
+  container.style.zIndex = "100"; // FIX: Ensure it is on top
+  container.style.width = `${options.width}px`;
+  container.style.height = `${options.height}px`;
 }
 
 function addZone() {
-    zoneCount++;
-    const zoneId = `zone-${zoneCount}`;
-    const zoneSettings = document.getElementById('zone-settings');
-    const zoneSetting = document.createElement('div');
-    zoneSetting.className = 'zone-setting';
-    zoneSetting.id = `${zoneId}-setting`;
+  zoneCount++;
+  const zoneId = `zone-${zoneCount}`;
+  const zoneSettings = document.getElementById("zone-settings");
+  if (!zoneSettings) return;
 
-    zoneSetting.innerHTML = `
-        <h4>Zone ${zoneCount}</h4>
-        <div class="control-group">
-            <label for="${zoneId}-color">Color:</label>
-            <div class="color-picker-container">
-                <input type="color" id="${zoneId}-color" value="#4CAF50">
-                <input type="text" id="${zoneId}-color-text" value="#4CAF50" class="color-text">
+  const zoneSetting = document.createElement("div");
+  zoneSetting.className = "zone-setting";
+  zoneSetting.id = `${zoneId}-setting`;
+
+  zoneSetting.innerHTML = `
+        <div class="zone-header">
+            <h4>Zone ${zoneCount}</h4>
+            <button class="btn-icon zone-remove-btn" data-zone-id="${zoneId}">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="control-row">
+            <input type="color" id="${zoneId}-color" value="#000000">
+            <div class="range-inputs">
+                <input type="number" id="${zoneId}-min" value="0.2" min="0" max="1" step="0.05" placeholder="Min">
+                <span>-</span>
+                <input type="number" id="${zoneId}-max" value="0.5" min="0" max="1" step="0.05" placeholder="Max">
             </div>
         </div>
-        <div class="control-group">
-            <label for="${zoneId}-min">Min Distance:</label>
-            <div class="slider-container">
-                <input type="range" id="${zoneId}-min-slider" min="0" max="1" value="0.2" step="0.05" class="slider">
-                <input type="number" id="${zoneId}-min" value="0.2" min="0" max="1" step="0.05">
-            </div>
-        </div>
-        <div class="control-group">
-            <label for="${zoneId}-max">Max Distance:</label>
-            <div class="slider-container">
-                <input type="range" id="${zoneId}-max-slider" min="0" max="1" value="0.5" step="0.05" class="slider">
-                <input type="number" id="${zoneId}-max" value="0.5" min="0" max="1" step="0.05">
-            </div>
-        </div>
-        <button class="btn-secondary zone-remove-btn" data-zone-id="${zoneId}">
-            <i class="fas fa-trash"></i> Remove
-        </button>
     `;
 
-    zoneSettings.appendChild(zoneSetting);
-    attachZoneEventListeners(zoneSetting);
-    updateJoystickFromPanel();
+  zoneSettings.appendChild(zoneSetting);
+  attachZoneEventListeners(zoneSetting);
+  updateJoystickFromPanel();
 }
 
 function attachZoneEventListeners(zoneSetting) {
-    zoneSetting.querySelectorAll('input').forEach(input => {
-        input.addEventListener('change', updateJoystickFromPanel);
-        if (input.type === 'range') {
-            const inputId = input.id.replace('-slider', '');
-            const numberInput = document.getElementById(inputId);
-            input.addEventListener('input', () => numberInput.value = input.value);
-            numberInput.addEventListener('change', () => input.value = numberInput.value);
-        }
-        if (input.type === 'color') {
-            const textInput = document.getElementById(`${input.id}-text`);
-            input.addEventListener('input', () => textInput.value = input.value);
-            textInput.addEventListener('change', () => input.value = textInput.value);
-        }
-    });
-    const removeBtn = zoneSetting.querySelector('.zone-remove-btn');
-    removeBtn.addEventListener('click', () => removeZone(removeBtn.getAttribute('data-zone-id')));
+  zoneSetting.querySelectorAll("input").forEach((input) => {
+    input.addEventListener("change", updateJoystickFromPanel);
+  });
+  const removeBtn = zoneSetting.querySelector(".zone-remove-btn");
+  if (removeBtn) {
+    removeBtn.addEventListener("click", () =>
+      removeZone(removeBtn.getAttribute("data-zone-id"))
+    );
+  }
 }
 
 function removeZone(zoneId) {
-    const zoneSetting = document.getElementById(`${zoneId}-setting`);
-    if (zoneSetting) {
-        zoneSetting.remove();
-        updateJoystickFromPanel();
-    }
+  const zoneSetting = document.getElementById(`${zoneId}-setting`);
+  if (zoneSetting) {
+    zoneSetting.remove();
+    updateJoystickFromPanel();
+  }
 }
 
 function getZonesFromPanel() {
-    const zones = [];
-    document.querySelectorAll('.zone-setting').forEach(zoneSetting => {
-        const zoneId = zoneSetting.id.replace('-setting', '');
-        const colorInput = document.getElementById(`${zoneId}-color`);
-        const minInput = document.getElementById(`${zoneId}-min`);
-        const maxInput = document.getElementById(`${zoneId}-max`);
+  const zones = [];
+  document.querySelectorAll(".zone-setting").forEach((zoneSetting) => {
+    const zoneId = zoneSetting.id.replace("-setting", "");
+    const colorInput = document.getElementById(`${zoneId}-color`);
+    const minInput = document.getElementById(`${zoneId}-min`);
+    const maxInput = document.getElementById(`${zoneId}-max`);
 
-        zones.push({
-            id: zoneId,
-            color: colorInput.value,
-            min: parseFloat(minInput.value),
-            max: parseFloat(maxInput.value)
-        });
-    });
-    return zones;
+    if (colorInput && minInput && maxInput) {
+      zones.push({
+        id: zoneId,
+        color: colorInput.value,
+        min: parseFloat(minInput.value),
+        max: parseFloat(maxInput.value),
+      });
+    }
+  });
+  return zones;
 }
 
 function updateJoystickFromPanel() {
-    const options = {
-        width: parseInt(document.getElementById('width').value),
-        height: parseInt(document.getElementById('height').value),
-        handleRadius: parseInt(document.getElementById('handleRadius').value),
-        color: document.getElementById('color').value,
-        handleColor: document.getElementById('handleColor').value,
-        sensitivity: parseFloat(document.getElementById('sensitivity').value),
-        deadzone: parseFloat(document.getElementById('deadzone').value),
-        boundaries: document.getElementById('boundaries').checked,
-        autoCenter: document.getElementById('autoCenter').checked,
-        shape: document.getElementById('shape').value,
-        mode: document.getElementById('mode').value,
-        lockAxis: document.getElementById('lockAxis').value || null,
-        vibration: document.getElementById('vibration').checked,
-        zones: getZonesFromPanel()
-    };
-    
-    initializeJoystick(options);
-}
+  // Safe getter with fallback to defaults if element missing
+  const getVal = (id, type = "string", fallback) => {
+    const el = document.getElementById(id);
+    if (!el) return fallback;
+    return type === "number" ? parseFloat(el.value) : el.value;
+  };
+  const getCheck = (id, fallback = false) => {
+    const el = document.getElementById(id);
+    return el ? el.checked : fallback;
+  };
 
-function applyTheme(themeName) {
-    document.documentElement.setAttribute('data-theme', themeName);
-    localStorage.setItem('theme', themeName);
-    currentTheme = themeName;
-}
+  // Determine if we need to recreate the joystick (for heavy changes like mode)
+  // or if we can just update options (for smooth real-time updates).
+  const currentMode = joystick ? joystick.options.mode : null;
+  const newMode = getVal("mode", "string", "static");
 
-function toggleTheme() {
-    applyTheme(currentTheme === 'light' ? 'dark' : 'light');
-}
+  const options = {
+    width: getVal("width", "number", 150),
+    height: getVal("height", "number", 150),
+    handleRadius: getVal("handleRadius", "number", 35),
+    maxMoveRadius: getVal("maxMoveRadius", "number", null) || null, // Allow null for default
+    color: getVal("color", "string", "white"),
+    handleColor: getVal("handleColor", "string", "black"),
+    sensitivity: getVal("sensitivity", "number", 1),
+    deadzone: getVal("deadzone", "number", 0.1),
+    boundaries: getCheck("boundaries", true),
+    autoCenter: getCheck("autoCenter", true),
+    shape: getVal("shape", "string", "circle"),
+    mode: newMode,
+    lockAxis: getVal("lockAxis", "string", null) || null,
+    vibration: getCheck("vibration", true),
+    zones: getZonesFromPanel(),
+  };
 
-function setupThemeToggle() {
-    const themeSwitch = document.getElementById('theme-switch');
-    if (themeSwitch) {
-        themeSwitch.checked = currentTheme === 'dark';
-        applyTheme(currentTheme);
-        themeSwitch.addEventListener('change', toggleTheme);
+  if (joystick && currentMode === newMode) {
+    // Update container size FIRST so refreshJoystick sees correct bounds
+    const container = document.getElementById("joystick-container");
+    if (container) {
+      container.style.width = `${options.width}px`;
+      container.style.height = `${options.height}px`;
     }
-}
 
-function setupTabs() {
-    document.querySelectorAll('.tab-button').forEach(button => {
-        button.addEventListener('click', () => {
-            const tabId = button.getAttribute('data-tab');
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            button.classList.add('active');
-            const tabContent = document.getElementById(`${tabId}-tab`);
-            if (tabContent) tabContent.classList.add('active');
-        });
+    // Smooth update: Only set options that have changed
+    Object.keys(options).forEach((key) => {
+      // Simple JSON stringify comparison works well for primitives and the zones array
+      if (
+        JSON.stringify(joystick.options[key]) !== JSON.stringify(options[key])
+      ) {
+        joystick.setOption(key, options[key]);
+      }
     });
+  } else {
+    // Full recreation needed (first load or mode change)
+    initializeJoystick(options);
+  }
 }
 
-function setupSliders() {
-    const sliderGroups = [
-        { slider: 'width-slider', input: 'width' },
-        { slider: 'height-slider', input: 'height' },
-        { slider: 'handleRadius-slider', input: 'handleRadius' },
-        { slider: 'sensitivity-slider', input: 'sensitivity' },
-        { slider: 'deadzone-slider', input: 'deadzone' }
-    ];
+function updateJoystickValues(data) {
+  // Update stats in demo.html header if it exists
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  };
 
-    sliderGroups.forEach(group => {
-        const slider = document.getElementById(group.slider);
-        const numberInput = document.getElementById(group.input);
+  setVal("positionX", data.position.x.toFixed(2));
+  setVal("positionY", data.position.y.toFixed(2));
 
-        slider.addEventListener('input', () => {
-            numberInput.value = slider.value;
-            updateJoystickFromPanel();
-        });
-        numberInput.addEventListener('change', () => {
-            slider.value = numberInput.value;
-            updateJoystickFromPanel();
-        });
+  // Update overlay stats in index.html
+  const statX = document.getElementById("stat-x");
+  const statY = document.getElementById("stat-y");
+  if (statX) statX.textContent = data.delta.x.toFixed(2);
+  if (statY) statY.textContent = data.delta.y.toFixed(2);
+
+  setVal("deltaX", data.delta.x.toFixed(2));
+  setVal("deltaY", data.delta.y.toFixed(2));
+  setVal("angle", (data.angle * (180 / Math.PI)).toFixed(2));
+  setVal("distance", data.distance.toFixed(2));
+  setVal("currentZone", data.zone || "None");
+}
+
+// UI Interaction Setup
+function setupInteractions() {
+  // Setup interactions if on demo page OR if controls exist
+  if (!isDemoPage() && !document.getElementById("width-slider")) return;
+
+  // Sliders syncing
+  const linkSlider = (sliderId, inputId) => {
+    const slider = document.getElementById(sliderId);
+    const input = document.getElementById(inputId);
+    if (slider && input) {
+      slider.addEventListener("input", () => {
+        input.value = slider.value;
+        updateJoystickFromPanel();
+      });
+      input.addEventListener("change", () => {
+        slider.value = input.value;
+        updateJoystickFromPanel();
+      });
+    }
+  };
+
+  linkSlider("width-slider", "width");
+  // FIX: Also link width slider to height for square/circle aspect ratio
+  const widthSlider = document.getElementById("width-slider");
+  const heightInput = document.getElementById("height");
+  if (widthSlider && heightInput) {
+    widthSlider.addEventListener("input", () => {
+      heightInput.value = widthSlider.value;
+      updateJoystickFromPanel();
     });
-}
+  }
 
-function setupColorPickers() {
-    const colorGroups = [
-        { picker: 'color', text: 'color-text' },
-        { picker: 'handleColor', text: 'handleColor-text' }
-    ];
+  linkSlider("handleRadius-slider", "handleRadius");
+  linkSlider("maxMoveRadius-slider", "maxMoveRadius"); // New slider setup
+  linkSlider("sensitivity-slider", "sensitivity");
+  linkSlider("deadzone-slider", "deadzone");
 
-    colorGroups.forEach(group => {
-        const colorPicker = document.getElementById(group.picker);
-        const textColorInput = document.getElementById(group.text);
+  // Color Pickers
+  const linkColor = (pickerId, textId) => {
+    const picker = document.getElementById(pickerId);
+    const text = document.getElementById(textId);
+    if (picker && text) {
+      picker.addEventListener("input", () => {
+        text.value = picker.value;
+        updateJoystickFromPanel();
+      });
+      text.addEventListener("input", () => {
+        picker.value = text.value;
+        updateJoystickFromPanel();
+      });
+    }
+  };
 
-        colorPicker.addEventListener('input', () => {
-            textColorInput.value = colorPicker.value;
-            updateJoystickFromPanel();
-        });
-        textColorInput.addEventListener('input', () => {
-            colorPicker.value = textColorInput.value;
-            updateJoystickFromPanel();
-        });
+  linkColor("color", "color-text");
+  linkColor("handleColor", "handleColor-text");
+
+  // Selects and Checkboxes
+  document.querySelectorAll('select, input[type="checkbox"]').forEach((el) => {
+    el.addEventListener("change", updateJoystickFromPanel);
+  });
+
+  // Buttons
+  const addZoneBtn = document.getElementById("addZone");
+  if (addZoneBtn) addZoneBtn.addEventListener("click", addZone);
+
+  const saveBtn = document.getElementById("save-config");
+  if (saveBtn) saveBtn.addEventListener("click", saveConfiguration);
+
+  const resetBtn = document.getElementById("reset-config");
+  if (resetBtn) resetBtn.addEventListener("click", resetConfiguration);
+
+  // Sidebar Toggle
+  const sidebarToggle = document.getElementById("sidebar-toggle");
+  const sidebar = document.querySelector(".floating-sidebar");
+
+  if (sidebarToggle && sidebar) {
+    sidebarToggle.addEventListener("click", () => {
+      sidebar.classList.toggle("active");
+      sidebarToggle.classList.toggle("active");
+
+      const isOpen = sidebar.classList.contains("active");
+      if (game) game.setPause(isOpen);
     });
-}
-
-function showToast(message, type = 'success', duration = 3000) {
-    const toastContainer = document.getElementById('toast-container');
-    if (!toastContainer) return;
-
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `<span>${message}</span>`;
-    toastContainer.appendChild(toast);
-
-    setTimeout(() => toast.classList.add('visible'), 10);
-    setTimeout(() => {
-        toast.classList.remove('visible');
-        setTimeout(() => toast.remove(), 300);
-    }, duration);
+  }
 }
 
 function saveConfiguration() {
-    const config = {
-        width: document.getElementById('width').value,
-        height: document.getElementById('height').value,
-        handleRadius: document.getElementById('handleRadius').value,
-        color: document.getElementById('color').value,
-        handleColor: document.getElementById('handleColor').value,
-        sensitivity: document.getElementById('sensitivity').value,
-        deadzone: document.getElementById('deadzone').value,
-        boundaries: document.getElementById('boundaries').checked,
-        autoCenter: document.getElementById('autoCenter').checked,
-        shape: document.getElementById('shape').value,
-        mode: document.getElementById('mode').value,
-        lockAxis: document.getElementById('lockAxis').value,
-        vibration: document.getElementById('vibration').checked,
-        zones: getZonesFromPanel()
-    };
-
-    localStorage.setItem('joystickConfig', JSON.stringify(config));
-    showToast('Configuration saved successfully!', 'success');
+  showToast("Configuration Saved");
 }
 
 function resetConfiguration() {
-    localStorage.removeItem('joystickConfig');
-    loadDefaultConfiguration();
-    showToast('Configuration reset to defaults', 'info');
-}
-
-function loadConfiguration() {
-    const storedConfig = localStorage.getItem('joystickConfig');
-    if (storedConfig) {
-        try {
-            const config = JSON.parse(storedConfig);
-            applyConfiguration(config);
-            showToast('Saved configuration loaded', 'info');
-        } catch (error) {
-            console.error('Error loading saved configuration:', error);
-            loadDefaultConfiguration();
-        }
-    } else {
-        loadDefaultConfiguration();
-    }
+  localStorage.removeItem("joystickConfig");
+  loadDefaultConfiguration();
+  showToast("Reset to Defaults");
 }
 
 function loadDefaultConfiguration() {
-    const defaultConfig = {
-        width: 150,
-        height: 150,
-        handleRadius: 30,
-        color: '#808080',
-        handleColor: '#ffffff',
-        sensitivity: 1,
-        deadzone: 0.1,
-        boundaries: false,
-        autoCenter: true,
-        shape: 'circle',
-        mode: 'dynamic',
-        lockAxis: '',
-        vibration: true,
-        zones: []
-    };
-    applyConfiguration(defaultConfig);
+  const defaultConfig = {
+    width: 100,
+    height: 100,
+    handleRadius: 25,
+    color: "#f0f0f0", // Paper Grey
+    handleColor: "#000000", // Ink Black
+    sensitivity: 1,
+    deadzone: 0.1,
+    boundaries: true,
+    autoCenter: true,
+    shape: "circle",
+    mode: "static", // Default to static so it's visible!
+    lockAxis: "",
+    vibration: true,
+    zones: [],
+  };
+  applyConfiguration(defaultConfig);
 }
 
 function applyConfiguration(config) {
-    setValueWithSlider('width', config.width);
-    setValueWithSlider('height', config.height);
-    setValueWithSlider('handleRadius', config.handleRadius);
-    document.getElementById('color').value = config.color;
-    document.getElementById('color-text').value = config.color;
-    document.getElementById('handleColor').value = config.handleColor;
-    document.getElementById('handleColor-text').value = config.handleColor;
-    setValueWithSlider('sensitivity', config.sensitivity);
-    setValueWithSlider('deadzone', config.deadzone);
-    document.getElementById('boundaries').checked = config.boundaries;
-    document.getElementById('autoCenter').checked = config.autoCenter;
-    document.getElementById('shape').value = config.shape;
-    document.getElementById('mode').value = config.mode;
-    document.getElementById('lockAxis').value = config.lockAxis || '';
-    document.getElementById('vibration').checked = config.vibration;
+  // Only proceed if joystick container exists
+  if (!document.getElementById("joystick-container")) return;
 
-    const zoneSettings = document.getElementById('zone-settings');
-    zoneSettings.innerHTML = '';
-    zoneCount = 0;
-    
-    if (config.zones && Array.isArray(config.zones)) {
-        config.zones.forEach(zone => {
-            addZone();
-            const zoneId = `zone-${zoneCount}`;
-            document.getElementById(`${zoneId}-color`).value = zone.color;
-            document.getElementById(`${zoneId}-color-text`).value = zone.color;
-            setValueWithSlider(`${zoneId}-min`, zone.min);
-            setValueWithSlider(`${zoneId}-max`, zone.max);
-        });
+  // Helper to set values
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    const sl = document.getElementById(id + "-slider");
+    if (el) el.value = val;
+    if (sl) sl.value = val;
+  };
+
+  setVal("width", config.width);
+  setVal("height", config.height);
+  setVal("handleRadius", config.handleRadius);
+  setVal("sensitivity", config.sensitivity);
+  setVal("deadzone", config.deadzone);
+
+  if (document.getElementById("color"))
+    document.getElementById("color").value = config.color;
+  if (document.getElementById("color-text"))
+    document.getElementById("color-text").value = config.color;
+  if (document.getElementById("handleColor"))
+    document.getElementById("handleColor").value = config.handleColor;
+  if (document.getElementById("handleColor-text"))
+    document.getElementById("handleColor-text").value = config.handleColor;
+
+  if (document.getElementById("boundaries"))
+    document.getElementById("boundaries").checked = config.boundaries;
+  if (document.getElementById("autoCenter"))
+    document.getElementById("autoCenter").checked = config.autoCenter;
+  if (document.getElementById("vibration"))
+    document.getElementById("vibration").checked = config.vibration;
+
+  if (document.getElementById("shape"))
+    document.getElementById("shape").value = config.shape;
+  if (document.getElementById("mode"))
+    document.getElementById("mode").value = config.mode;
+  if (document.getElementById("lockAxis"))
+    document.getElementById("lockAxis").value = config.lockAxis || "";
+
+  updateJoystickFromPanel();
+}
+
+// Initial Load
+document.addEventListener("DOMContentLoaded", () => {
+  // Check if we are on a page that needs the game/joystick (index or demo)
+  if (document.getElementById("game-canvas")) {
+    initializeGame();
+    // We only load default config if no saved one? Or just force default for demo?
+    // Let's force default for consistency
+    loadDefaultConfiguration();
+
+    // Setup interactions if controls exist
+    if (isDemoPage() || document.getElementById("width-slider")) {
+      setupInteractions();
     }
-
-    updateJoystickFromPanel();
-}
-
-function setValueWithSlider(inputId, value) {
-    const input = document.getElementById(inputId);
-    const slider = document.getElementById(`${inputId}-slider`);
-    if (input) input.value = value;
-    if (slider) slider.value = value;
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    setupThemeToggle();
-    setupTabs();
-    setupSliders();
-    setupColorPickers();
-
-    document.getElementById('addZone').addEventListener('click', addZone);
-    document.getElementById('save-config').addEventListener('click', saveConfiguration);
-    document.getElementById('reset-config').addEventListener('click', resetConfiguration);
-
-    const selectInputs = document.querySelectorAll('select');
-    selectInputs.forEach(select => {
-        select.addEventListener('change', updateJoystickFromPanel);
-    });
-
-    const checkboxInputs = document.querySelectorAll('input[type="checkbox"]');
-    checkboxInputs.forEach(checkbox => {
-        checkbox.addEventListener('change', updateJoystickFromPanel);
-    });
-
-    loadConfiguration();
+  }
 });
+
+function showToast(message) {
+  // Simple toast
+  const container = document.getElementById("toast-container");
+  if (!container) return;
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add("show");
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }, 10);
+}
+
+// Expose copy function globally
+window.copyCode = function (button) {
+  const pre = button.nextElementSibling; // The pre tag is next to the button
+  if (pre) {
+    const code = pre.textContent;
+    navigator.clipboard
+      .writeText(code)
+      .then(() => {
+        button.classList.add("copied");
+        const icon = button.querySelector("i");
+        icon.className = "fas fa-check";
+
+        setTimeout(() => {
+          button.classList.remove("copied");
+          icon.className = "fas fa-copy";
+        }, 2000);
+      })
+      .catch((err) => {
+        console.error("Failed to copy text: ", err);
+      });
+  }
+};

@@ -1,212 +1,407 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Virtual Joystick Demo</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="app-container">
-        <header>
-            <h1><i class="fas fa-gamepad"></i> Virtual Joystick Demo</h1>
-            <div class="theme-toggle">
-                <input type="checkbox" id="theme-switch" class="theme-switch">
-                <label for="theme-switch" class="theme-label">
-                    <i class="fas fa-sun"></i>
-                    <i class="fas fa-moon"></i>
-                    <div class="ball"></div>
-                </label>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Joystec | Virtual Joystick</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <div class="logo"><i class="fas fa-gamepad"></i> Joystec</div>
+        <nav>
+          <a
+            href="https://github.com/blaxezcode/Virtual-Joystick"
+            class="nav-link"
+            >GitHub</a
+          >
+          <a
+            href="demo.html"
+            class="nav-link"
+            style="color: var(--accent); opacity: 1"
+            >Demo</a
+          >
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <!-- Interactive Hero Demo -->
+      <section class="hero-demo">
+        <button id="sidebar-toggle" class="sidebar-toggle-btn">
+          <i class="fas fa-sliders-h"></i>
+        </button>
+        <div class="embedded-viewport">
+          <div id="ui-layer">
+            <div id="score-display" class="hud-text">00</div>
+          </div>
+
+          <div id="game-over-screen">
+            <h1>Signal Lost</h1>
+            <div
+              class="hud-text"
+              id="final-score"
+              style="margin-bottom: 20px; font-size: 20px"
+            >
+              SCORE: 0
             </div>
-        </header>
+            <button id="restart-btn">Re-Initialize</button>
+          </div>
 
-        <main>
-            <div class="preview-section">
-                <div class="joystick-wrapper">
-                    <div id="joystick-container"></div>
-                </div>
-                <div class="output-display">
-                    <div class="output-card">
-                        <div class="output-group">
-                            <span class="output-label">Position:</span>
-                            <span class="output-value">X: <span id="positionX">0.00</span>, Y: <span id="positionY">0.00</span></span>
-                        </div>
-                        <div class="output-group">
-                            <span class="output-label">Delta:</span>
-                            <span class="output-value">X: <span id="deltaX">0.00</span>, Y: <span id="deltaY">0.00</span></span>
-                        </div>
-                        <div class="output-group">
-                            <span class="output-label">Angle:</span>
-                            <span class="output-value"><span id="angle">0.00</span>°</span>
-                        </div>
-                        <div class="output-group">
-                            <span class="output-label">Distance:</span>
-                            <span class="output-value"><span id="distance">0.00</span></span>
-                        </div>
-                        <div class="output-group">
-                            <span class="output-label">Zone:</span>
-                            <span class="output-value"><span id="currentZone">None</span></span>
-                        </div>
-                    </div>
-                </div>
+          <canvas id="game-canvas"></canvas>
+          <div id="joystick-container" class="joystick-overlay"></div>
+        </div>
+
+        <aside class="floating-sidebar">
+          <div class="sidebar-title">
+            <i class="fas fa-sliders-h"></i> Customization
+          </div>
+
+          <div class="quick-controls">
+            <div class="control-group">
+              <label>Base Size</label>
+              <input
+                type="range"
+                id="width-slider"
+                min="100"
+                max="300"
+                value="150"
+                class="styled-range"
+              />
+              <input type="number" id="width" value="150" hidden />
+              <input type="number" id="height" value="150" hidden />
+            </div>
+            <div class="control-group">
+              <label>Handle Size</label>
+              <input
+                type="range"
+                id="handleRadius-slider"
+                min="10"
+                max="75"
+                value="35"
+                class="styled-range"
+              />
+              <input type="number" id="handleRadius" value="35" hidden />
+            </div>
+            <div class="control-group">
+              <label>Movement Range</label>
+              <input
+                type="range"
+                id="maxMoveRadius-slider"
+                min="20"
+                max="150"
+                value="75"
+                class="styled-range"
+              />
+              <input type="number" id="maxMoveRadius" value="75" hidden />
+            </div>
+            <div class="control-group">
+              <label>Sensitivity</label>
+              <input
+                type="range"
+                id="sensitivity-slider"
+                min="0.5"
+                max="3"
+                step="0.1"
+                value="1"
+                class="styled-range"
+              />
+              <input type="number" id="sensitivity" value="1" hidden />
+            </div>
+            <div class="control-group">
+              <label>Deadzone</label>
+              <input
+                type="range"
+                id="deadzone-slider"
+                min="0"
+                max="0.5"
+                step="0.05"
+                value="0.1"
+                class="styled-range"
+              />
+              <input type="number" id="deadzone" value="0.1" hidden />
             </div>
 
-            <div class="controls-section">
-                <div class="controls-tabs">
-                    <button class="tab-button active" data-tab="basic">Basic</button>
-                    <button class="tab-button" data-tab="appearance">Appearance</button>
-                    <button class="tab-button" data-tab="behavior">Behavior</button>
-                    <button class="tab-button" data-tab="zones">Zones</button>
+            <div
+              style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem"
+            >
+              <div class="control-group">
+                <label>Base Color</label>
+                <div class="color-input-wrapper">
+                  <input type="color" id="color" value="#ffffff" />
                 </div>
-
-                <div class="tab-content active" id="basic-tab">
-                    <div class="control-card">
-                        <h3>Size & Position</h3>
-                        <div class="control-group">
-                            <label for="width">Width:</label>
-                            <div class="slider-container">
-                                <input type="range" id="width-slider" min="50" max="300" value="150" class="slider">
-                                <input type="number" id="width" value="150" min="50" max="300">
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label for="height">Height:</label>
-                            <div class="slider-container">
-                                <input type="range" id="height-slider" min="50" max="300" value="150" class="slider">
-                                <input type="number" id="height" value="150" min="50" max="300">
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label for="handleRadius">Handle Radius:</label>
-                            <div class="slider-container">
-                                <input type="range" id="handleRadius-slider" min="10" max="60" value="30" class="slider">
-                                <input type="number" id="handleRadius" value="30" min="10" max="60">
-                            </div>
-                        </div>
-                    </div>
+              </div>
+              <div class="control-group">
+                <label>Handle Color</label>
+                <div class="color-input-wrapper">
+                  <input type="color" id="handleColor" value="#000000" />
                 </div>
-
-                <div class="tab-content" id="appearance-tab">
-                    <div class="control-card">
-                        <h3>Colors & Shape</h3>
-                        <div class="control-group">
-                            <label for="color">Base Color:</label>
-                            <div class="color-picker-container">
-                                <input type="color" id="color" value="#808080">
-                                <input type="text" id="color-text" value="#808080" class="color-text">
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label for="handleColor">Handle Color:</label>
-                            <div class="color-picker-container">
-                                <input type="color" id="handleColor" value="#ffffff">
-                                <input type="text" id="handleColor-text" value="#ffffff" class="color-text">
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label for="shape">Shape:</label>
-                            <div class="select-container">
-                                <select id="shape">
-                                    <option value="circle">Circle</option>
-                                    <option value="square">Square</option>
-                                </select>
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tab-content" id="behavior-tab">
-                    <div class="control-card">
-                        <h3>Joystick Behavior</h3>
-                        <div class="control-group">
-                            <label for="sensitivity">Sensitivity:</label>
-                            <div class="slider-container">
-                                <input type="range" id="sensitivity-slider" min="0.1" max="2" value="1" step="0.1" class="slider">
-                                <input type="number" id="sensitivity" value="1" min="0.1" max="2" step="0.1">
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label for="deadzone">Deadzone:</label>
-                            <div class="slider-container">
-                                <input type="range" id="deadzone-slider" min="0" max="1" value="0.1" step="0.05" class="slider">
-                                <input type="number" id="deadzone" value="0.1" min="0" max="1" step="0.05">
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label for="mode">Mode:</label>
-                            <div class="select-container">
-                                <select id="mode">
-                                    <option value="dynamic">Dynamic</option>
-                                    <option value="static">Static</option>
-                                </select>
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
-                        </div>
-                        <div class="control-group">
-                            <label for="lockAxis">Lock Axis:</label>
-                            <div class="select-container">
-                                <select id="lockAxis">
-                                    <option value="">None</option>
-                                    <option value="x">X</option>
-                                    <option value="y">Y</option>
-                                </select>
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
-                        </div>
-                        <div class="control-group checkbox-group">
-                            <label for="boundaries">
-                                <input type="checkbox" id="boundaries">
-                                <span class="custom-checkbox"></span>
-                                Enable Boundaries
-                            </label>
-                        </div>
-                        <div class="control-group checkbox-group">
-                            <label for="autoCenter">
-                                <input type="checkbox" id="autoCenter" checked>
-                                <span class="custom-checkbox"></span>
-                                Auto Center
-                            </label>
-                        </div>
-                        <div class="control-group checkbox-group">
-                            <label for="vibration">
-                                <input type="checkbox" id="vibration" checked>
-                                <span class="custom-checkbox"></span>
-                                Vibration <Feedbac></Feedbac>k
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tab-content" id="zones-tab">
-                    <div class="control-card">
-                        <h3>Zones Configuration</h3>
-                        <button id="addZone" class="btn-primary">
-                            <i class="fas fa-plus"></i> Add New Zone
-                        </button>
-                        <div id="zone-settings" class="zones-container">
-                            <!-- Zone settings will be added here -->
-                        </div>
-                    </div>
-                </div>
+              </div>
             </div>
-        </main>
 
-        <footer>
-            <div class="action-buttons">
-                <button id="save-config" class="btn-primary">
-                    <i class="fas fa-save"></i> Save Configuration
-                </button>
-                <button id="reset-config" class="btn-secondary">
-                    <i class="fas fa-undo"></i> Reset to Default
-                </button>
+            <div class="control-group">
+              <label>Mode</label>
+              <select
+                id="mode"
+                style="
+                  width: 100%;
+                  padding: 0.5rem;
+                  border-radius: 6px;
+                  border: 1px solid var(--border);
+                "
+              >
+                <option value="static" selected>Static (Visible)</option>
+                <option value="dynamic">Dynamic (Invisible)</option>
+              </select>
             </div>
-        </footer>
-    </div>
 
-    <div id="toast-container" class="toast-container"></div>
-    
-    <script type="module" src="script.js"></script>
-</body>
+            <div
+              style="
+                border-top: 1px solid var(--border);
+                padding-top: 1rem;
+                display: flex;
+                flex-direction: column;
+                gap: 0.8rem;
+              "
+            >
+              <label class="checkbox-label">
+                <input type="checkbox" id="autoCenter" checked /> Auto-Center
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="boundaries" checked /> Boundaries
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="vibration" checked /> Vibration
+              </label>
+            </div>
+
+            <!-- Hidden defaults -->
+            <select id="shape" hidden>
+              <option value="circle">Circle</option>
+            </select>
+          </div>
+        </aside>
+      </section>
+
+      <section class="hero">
+        <div class="container">
+          <h1>Touch Controls<br />Reimagined.</h1>
+          <p>
+            A minimalist, zero-dependency virtual joystick library for the
+            modern web. Precision, Haptics, and Multi-touch support out of the
+            box.
+          </p>
+          <div style="margin-top: 2rem">
+            <a href="demo.html" class="btn-primary">
+              <i class="fas fa-play"></i> Launch Demo
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="features">
+        <div class="container">
+          <div class="features-grid">
+            <div class="feature-card">
+              <i class="fas fa-feather feature-icon"></i>
+              <h3>Lightweight</h3>
+              <p>
+                Under 5KB gzipped. Zero dependencies. Drop it into any project
+                and it just works.
+              </p>
+            </div>
+            <div class="feature-card">
+              <i class="fas fa-mobile-alt feature-icon"></i>
+              <h3>Haptic Feedback</h3>
+              <p>
+                Built-in support for the Vibration API, providing tactile
+                feedback for zones and boundaries.
+              </p>
+            </div>
+            <div class="feature-card">
+              <i class="fas fa-vector-square feature-icon"></i>
+              <h3>Customizable</h3>
+              <p>
+                Control every aspect: sizes, colors, deadzones, sensitivity,
+                shapes, and behavior modes.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Usage Guide Section -->
+      <section
+        class="usage-guide"
+        style="padding: 4rem 0; background: var(--surface)"
+      >
+        <div class="container">
+          <h2
+            style="
+              text-align: center;
+              margin-bottom: 3rem;
+              font-size: 2.2rem;
+              font-weight: 700;
+            "
+          >
+            How to Use
+          </h2>
+
+          <div class="usage-grid">
+            <!-- Installation -->
+            <div
+              class="code-card"
+              style="
+                background: var(--background);
+                padding: 1.5rem;
+                border-radius: 12px;
+                border: 1px solid var(--border);
+              "
+            >
+              <h3 style="margin-bottom: 1rem; color: var(--accent)">
+                <i class="fas fa-download"></i> Installation
+              </h3>
+              <p style="margin-bottom: 1rem; opacity: 0.8">
+                Clone the repository or download the source files directly.
+              </p>
+              <button class="copy-btn" onclick="copyCode(this)">
+                <i class="fas fa-copy"></i>
+              </button>
+              <pre
+                style="
+                  background: #1e1e1e;
+                  padding: 1rem;
+                  border-radius: 8px;
+                  overflow-x: auto;
+                  color: #d4d4d4;
+                  font-family: 'Fira Code', monospace;
+                  font-size: 0.9rem;
+                "
+              >
+<span style="color: #569cd6;">git</span> clone https://github.com/blaxezcode/Virtual-Joystick.git</pre>
+            </div>
+
+            <!-- Basic Usage -->
+            <div
+              class="code-card"
+              style="
+                background: var(--background);
+                padding: 1.5rem;
+                border-radius: 12px;
+                border: 1px solid var(--border);
+              "
+            >
+              <h3 style="margin-bottom: 1rem; color: var(--accent)">
+                <i class="fas fa-code"></i> Basic Usage
+              </h3>
+              <p style="margin-bottom: 1rem; opacity: 0.8">
+                Import the library and initialize it on a container element.
+              </p>
+              <button class="copy-btn" onclick="copyCode(this)">
+                <i class="fas fa-copy"></i>
+              </button>
+              <pre
+                style="
+                  background: #1e1e1e;
+                  padding: 1rem;
+                  border-radius: 8px;
+                  overflow-x: auto;
+                  color: #d4d4d4;
+                  font-family: 'Fira Code', monospace;
+                  font-size: 0.9rem;
+                "
+              >
+<span style="color: #c586c0;">import</span> VirtualJoystick <span style="color: #c586c0;">from</span> <span style="color: #ce9178;">"./src/virtual-joystick.js"</span>;
+
+<span style="color: #569cd6;">const</span> container = <span style="color: #9cdcfe;">document</span>.<span style="color: #dcdcaa;">getElementById</span>(<span style="color: #ce9178;">"joystick-zone"</span>);
+
+<span style="color: #569cd6;">const</span> joystick = <span style="color: #569cd6;">new</span> <span style="color: #4ec9b0;">VirtualJoystick</span>(container, {
+  <span style="color: #9cdcfe;">width</span>: <span style="color: #b5cea8;">150</span>,
+  <span style="color: #9cdcfe;">height</span>: <span style="color: #b5cea8;">150</span>,
+  <span style="color: #9cdcfe;">color</span>: <span style="color: #ce9178;">"#ffffff"</span>,
+  <span style="color: #9cdcfe;">handleColor</span>: <span style="color: #ce9178;">"#000000"</span>,
+  <span style="color: #dcdcaa;">onChange</span>: (<span style="color: #9cdcfe;">data</span>) <span style="color: #569cd6;">=></span> {
+    <span style="color: #9cdcfe;">console</span>.<span style="color: #dcdcaa;">log</span>(data.delta.x, data.delta.y);
+  }
+});</pre>
+            </div>
+
+            <!-- Advanced Features -->
+            <div
+              class="code-card"
+              style="
+                background: var(--background);
+                padding: 1.5rem;
+                border-radius: 12px;
+                border: 1px solid var(--border);
+              "
+            >
+              <h3 style="margin-bottom: 1rem; color: var(--accent)">
+                <i class="fas fa-bolt"></i> Advanced Options
+              </h3>
+              <p style="margin-bottom: 1rem; opacity: 0.8">
+                Customize behavior with advanced settings.
+              </p>
+              <button class="copy-btn" onclick="copyCode(this)">
+                <i class="fas fa-copy"></i>
+              </button>
+              <pre
+                style="
+                  background: #1e1e1e;
+                  padding: 1rem;
+                  border-radius: 8px;
+                  overflow-x: auto;
+                  color: #d4d4d4;
+                  font-family: 'Fira Code', monospace;
+                  font-size: 0.9rem;
+                "
+              >
+<span style="color: #569cd6;">const</span> joystick = <span style="color: #569cd6;">new</span> <span style="color: #4ec9b0;">VirtualJoystick</span>(container, {
+  <span style="color: #9cdcfe;">mode</span>: <span style="color: #ce9178;">"dynamic"</span>,       <span style="color: #6a9955;">// Stick appears where you touch</span>
+  <span style="color: #9cdcfe;">maxMoveRadius</span>: <span style="color: #b5cea8;">75</span>,     <span style="color: #6a9955;">// Limit handle movement range</span>
+  <span style="color: #9cdcfe;">lockAxis</span>: <span style="color: #ce9178;">"x"</span>,         <span style="color: #6a9955;">// Lock movement to X axis</span>
+  <span style="color: #9cdcfe;">haptics</span>: <span style="color: #569cd6;">true</span>,         <span style="color: #6a9955;">// Enable vibration feedback</span>
+});</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <div class="container">
+          <div class="footer-content">
+            <div class="author-info">
+              Created by
+              <a href="https://github.com/blaxezcode" target="_blank"
+                >@blaxezcode</a
+              >
+            </div>
+            <div class="github-actions">
+              <a
+                href="https://github.com/blaxezcode/Virtual-Joystick"
+                target="_blank"
+                class="btn-small"
+              >
+                <i class="fab fa-github"></i> Star on GitHub
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      <script type="module" src="script.js"></script>
+    </main>
+  </body>
 </html>
